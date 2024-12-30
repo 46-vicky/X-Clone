@@ -1,6 +1,6 @@
 import User from "../models/userModel.js"
 import bcrypt from "bcryptjs"
-//import genarateToken from "../utils/generateToken.js";
+import generateToken from "../utils/generateToken.js";
 
 export const signup = async (req,res)=>{
     try{
@@ -41,6 +41,7 @@ export const signup = async (req,res)=>{
         })
 
         if(newUser){
+            generateToken(newUser._id,res)
             await newUser.save()
             res.status(200).json({
                 _id        : newUser._id,
@@ -64,10 +65,54 @@ export const signup = async (req,res)=>{
     }
 }
 
-export const login = (req,res)=>{
-    res.send('login')
+export const login = async (req,res)=>{
+    try{
+        const {userName,password} = req.body;
+        const user = await User.findOne({userName});
+        const isValidPassword = await bcrypt.compare(password, user?.password || "")
+
+        if(!user || !isValidPassword){
+            return res.status(400).json({error : "Invalid Username or Password"})
+        }
+        generateToken(user._id, res)
+
+        res.status(200).json({
+            _id        : user._id,
+            userName   : user.userName,
+            fullName   : user.fullName,
+            email      : user.email,
+            followers  : user.followers,
+            following  : user.followers,
+            profileImg : user.profileImg,
+            coverImg   : user.coverImg,
+            bio        : user.bio,
+            link       : user.link
+        })
+
+    }catch(error){
+        console.log(`Error in Login Controller : ${error}`)
+        res.status(400).json({error : "Internal Server Error"})
+    }
 }
 
-export const logout = (req,res)=>{
-    res.send('logout')
+export const logout = async (req,res)=>{
+    try{
+        res.cookie("jwt", "" ,{
+            maxAge : 0
+        })
+        res.status(200).json({message : "Logout Successfully!"})
+    }catch(error){
+        console.log(`Error in Logout Controller : ${error}`)
+        res.status(400).json({error : "Internal Server Error"})
+    }
+}
+
+export const getMe = async (req,res)=>{
+    try{
+        const user = await User.findOne({_id:req.user._id}).select("-password");
+        res.status(200).json(user)
+    }catch(error){
+        console.log(`Error in getMe Controller : ${error}`)
+        res.status(400).json({error : "Internal Server Error"})
+    }
 }
