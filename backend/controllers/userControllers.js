@@ -85,7 +85,7 @@ export const getSuggestedUsers = async (req,res)=>{
              attempts++;
          }
  
-         suggestedUsers.forEach(user => user.password = nul);
+         suggestedUsers.forEach(user => user.password = null);
 
         res.status(200).json(suggestedUsers)
 

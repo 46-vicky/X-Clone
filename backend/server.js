@@ -7,6 +7,7 @@ import postRoute from "./routes/postRoute.js"
 import notificationRoute from "./routes/notificationRoute.js"
 import cookieParser from "cookie-parser"
 import cloudniary from "cloudinary"
+import cors from "cors"
 
 dotenv.config()
 
@@ -19,8 +20,20 @@ cloudniary.config({
 const app = express()
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json())
+app.use(cors({
+    origin : "http://localhost:3000",
+    credentials : true
+}))
+
+app.use(express.json(
+    {
+        limit : "5mb"
+    }
+))
 app.use(cookieParser())
+app.use(express.urlencoded({
+    extended:true
+}))
 
 app.use('/api/auth', authRoute)
 app.use('/api/users', userRoute)
