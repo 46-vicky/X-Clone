@@ -85,7 +85,10 @@ export const createComment = async (req, res)=>{
         }
 
         post.comments.push(comment);
+
         await post.save()
+
+        const updatedComment = post.comments
 
         const newNotification =  new Notification({
             type: "comment",
@@ -94,7 +97,7 @@ export const createComment = async (req, res)=>{
         })
         await newNotification.save();
 
-        res.status(200).json(post);
+        res.status(200).json(updatedComment);
 
     }catch(error){
         console.log(`Error in Comment Post Controller ${error}`)
@@ -118,8 +121,11 @@ export const likeUnlikePost = async (req, res)=>{
         if(userLikePost){
             await Post.updateOne({_id : id},{$pull : {likes : userId}})
             await User.updateOne({_id : userId},{$pull : {likedPosts : id}})
-            res.status(200).json({message : "Post Unliked Successfully!"})
+
+            const updatedLikes = post.likes.filter((id)=>id.toString() !== userId.toString())
+            res.status(200).json(updatedLikes)
         }else{
+            post.likes.push(userId)
             await Post.updateOne({_id : id},{$push : {likes : userId}})
             await User.updateOne({_id : userId},{$push : {likedPosts : id}})
 
@@ -130,8 +136,8 @@ export const likeUnlikePost = async (req, res)=>{
             })
 
             await notification.save();
-
-            res.status(200).json({message : "Post Liked Successfully!"})
+            const updatedLikes = post.likes;
+            res.status(200).json(updatedLikes)
         }
 
 

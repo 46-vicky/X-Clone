@@ -33,10 +33,11 @@ const Posts = ({feedType}) => {
 				});
 
 				const data = await res.json();
-				return data;
+				
 				if(!res.ok){
 					throw new Error(data.error || "Something Went Wrong!")
 				}
+				return data;
 			}catch(error){
 				throw new Error(error)
 			}
@@ -46,6 +47,7 @@ const Posts = ({feedType}) => {
 	useEffect(()=>{
 		refetch()
 	},[feedType, refetch])
+
 	return (
 		<>
 			{(isLoading || isRefetching) && (

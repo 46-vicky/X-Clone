@@ -9,16 +9,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { baseURL } from "../../constant/url";
 import LoadingSpinner from "./LoadingSpinner";
 import toast from "react-hot-toast";
+import { formatPostDate } from "../../utils/data";
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
-	const postOwner = post.user;
-	const isLiked = false;
 
 	const {data:authUser} = useQuery({
 		queryKey : ["authUser"]
 	})
 	const queryClient = useQueryClient();
+
 	const {mutate : deletePost, isPending : isDeleting} = useMutation({
 		mutationFn : async ()=>{
 			try{
@@ -45,9 +45,89 @@ const Post = ({ post }) => {
 		}
 	})
 
-	const formattedDate = "1h";
 
-	const isCommenting = false;
+	const {mutate:likePost, isPending : isLiking} = useMutation({
+
+		mutationFn : async()=>{
+			try{
+				const res = await fetch(`${baseURL}/api/posts/likes/${post._id}`,{
+					method : "POST",
+					credentials : "include",
+					headers : {
+						"Content-Type"  : "application/json"
+					}
+				})
+
+				const data = await res.json()
+
+				if(!res.ok){
+					throw new Error(data.error || "Something went Wrong")
+				}
+				return data;
+			}catch(error){
+				throw new Error(error)
+			}
+		},
+		onSuccess : (updatedLikes)=>{
+			// queryClient.invalidateQueries({querKey : ["posts"]})
+			queryClient.setQueryData(["posts"],(oldData)=>{
+				return oldData.map((p)=>{
+					if(p._id === post._id){
+						return {...p, likes : updatedLikes}
+					}
+					return p;
+				})
+
+			})
+		},
+		onError : (error)=>{
+			toast.error(error.message);
+		}
+
+	})
+
+	const {mutate : commentPost, isPending : isCommenting} = useMutation({
+		mutationFn : async ()=>{
+			try{
+				const res = await fetch(`${baseURL}/api/posts/comment/${post._id}`,{
+					method : "POST",
+					credentials : "include",
+					headers : {
+						"Content-Type" : "application/json"
+					},
+					body : JSON.stringify({text : comment})
+				})
+			
+				const data = await res.json()
+				if(!res.ok){
+					throw new Error(data.error || "Something went Wrong")
+				}
+				return data;
+			}catch(error){
+				throw new Error(error)
+			}
+		},
+		onSuccess : (updatedComment)=>{
+			queryClient.setQueryData(["posts"],(oldData)=>{
+				return oldData.map((data)=>{
+					if(data._id === post._id){
+						return {...data, comments : updatedComment}
+					}
+					return data;
+				})
+			})
+		},
+		onError : (error)=>{
+			toast.error(error.message)
+		}
+	})
+	
+	const postOwner = post.user;
+	const isLiked = post.likes.includes(authUser._id);
+
+	const formattedDate = formatPostDate(post.createdAt);
+
+	// const isCommenting = true;
 
 	const isMyPost = authUser._id === post.user._id
 
@@ -57,25 +137,30 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if(isCommenting) return;
+		commentPost()
 	};
 
-	const handleLikePost = () => {};
+	const handleLikePost = () => {
+		if(isLiking) return;
+		likePost()
+	};
 
 	return (
 		<>
 			<div className='flex gap-2 items-start p-4 border-b border-gray-700'>
 				<div className='avatar'>
-					<Link to={`/profile/${postOwner.username}`} className='w-8 rounded-full overflow-hidden'>
+					<Link to={`/profile/${postOwner.userName}`} className='w-8 rounded-full overflow-hidden'>
 						<img src={postOwner.profileImg || "/avatar-placeholder.png"} alt="avatar"/>
 					</Link>
 				</div>
 				<div className='flex flex-col flex-1'>
 					<div className='flex gap-2 items-center'>
-						<Link to={`/profile/${postOwner.username}`} className='font-bold'>
+						<Link to={`/profile/${postOwner.userName}`} className='font-bold'>
 							{postOwner.fullName}
 						</Link>
 						<span className='text-gray-700 flex gap-1 text-sm'>
-							<Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>
+							<Link to={`/profile/${postOwner.userName}`}>@{postOwner.userName}</Link>
 							<span>·</span>
 							<span>{formattedDate}</span>
 						</span>
@@ -137,7 +222,7 @@ const Post = ({ post }) => {
 													<div className='flex items-center gap-1'>
 														<span className='font-bold'>{comment.user.fullName}</span>
 														<span className='text-gray-700 text-sm'>
-															@{comment.user.username}
+															@{comment.user.userName}
 														</span>
 													</div>
 													<div className='text-sm'>{comment.text}</div>
@@ -157,7 +242,7 @@ const Post = ({ post }) => {
 										/>
 										<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
 											{isCommenting ? (
-												<span className='loading loading-spinner loading-md'></span>
+												<LoadingSpinner size="sm"/>
 											) : (
 												"Post"
 											)}
@@ -173,14 +258,15 @@ const Post = ({ post }) => {
 								<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>
 							</div>
 							<div className='flex gap-1 items-center group cursor-pointer' onClick={handleLikePost}>
-								{!isLiked && (
+								{isLiking && <LoadingSpinner size="sm"/>}
+								{!isLiked && !isLiking &&(
 									<FaRegHeart className='w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500' />
 								)}
-								{isLiked && <FaRegHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />}
+								{isLiked && !isLiking &&(<FaRegHeart className='w-4 h-4 cursor-pointer  text-pink-500 ' />)}
 
 								<span
-									className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-										isLiked ? "text-pink-500" : ""
+									className={`text-sm  group-hover:text-pink-500 ${
+										isLiked ? "text-pink-500" : "text-slate-500"
 									}`}
 								>
 									{post.likes.length}

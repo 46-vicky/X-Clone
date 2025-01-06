@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
-import { useQuery, useQueryClient} from "@tanstack/react-query"
+import { useQuery} from "@tanstack/react-query"
 import {baseURL} from "../../constant/url"
 import useFollow from "../../hooks/useFollow";
 import LoadingSpinner from "./LoadingSpinner"
@@ -32,7 +32,7 @@ const RightPanel = () => {
 
 	const {follow, isPending} = useFollow();
 
-	if(suggestedUsers?.length == 0){
+	if(suggestedUsers?.length === 0){
 		return(
 			<div className="md:w-64 w-0">
 			</div>
