@@ -24,8 +24,6 @@ export const followUnFollowUser = async (req,res)=>{
         const userToModify = await User.findById({_id:id})
         const currentUser = await User.findById({_id : req.user._id})
 
-        console.log(currentUser)
-
         if(id === req.user._id){
             return res.status(400).json({error : "You Can't Unfollow or Follow Your Self"})
         }
@@ -125,25 +123,22 @@ export const updateUser = async (req,res)=>{
             user.password = await bcrypt.hash(newPassword,salt)
         }
 
+        if(profileImg){
 
+            if(user.profileImg){
+                await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]);
+            }
+            const uploadedResponse = await cloudinary.uploader.upload(profileImg)
+            profileImg = uploadedResponse.secure_url;
+        }
 
-
-        // if(profileImg){
-
-        //     if(user.profileImg){
-        //         await cloudinary.uploader.destory(user.profileImg.split("/").pop().split(".")[0]);
-        //     }
-        //     const uploadedResponse = await cloudinary.uploader.upload(profileImg)
-        //     profileImg = uploadedResponse.secure_url;
-        // }
-
-        // if(coverImg){
-        //     if(user.coverImg){
-        //         await cloudinary.uploader.destory(user.coverImg.split("/").pop().split(".")[0]);
-        //     }
-        //     const uploadedResponse = await cloudinary.uploader.upload(coverImg)
-        //     coverImg = uploadedResponse.secure_url;
-        // }
+        if(coverImg){
+            if(user.coverImg){
+                await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]);
+            }
+            const uploadedResponse = await cloudinary.uploader.upload(coverImg)
+            coverImg = uploadedResponse.secure_url;
+        }
 
         if(userName !== user.userName){
             const isExistUserName = await User.findOne({userName, _id:{$ne:req.user_id}})
@@ -159,7 +154,7 @@ export const updateUser = async (req,res)=>{
             }
         }
 
-        user.fillName = fullName || user.fullName;
+        user.fullName = fullName || user.fullName;
         user.userName = userName || user.userName;
         user.email = email || user.email;
         user.bio = bio || user.bio;

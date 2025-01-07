@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 const EditProfileModal = () => {
 	const [formData, setFormData] = useState({
 		fullName: "",
-		username: "",
+		userName: "",
 		email: "",
 		bio: "",
 		link: "",
@@ -11,9 +14,27 @@ const EditProfileModal = () => {
 		currentPassword: "",
 	});
 
+	const {data: authUser} = useQuery({queryKey : ["authUser"]})
+
+	const {updateProfile, isUpdatingProfile} = useUpdateUserProfile()
+
 	const handleInputChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
+
+	useEffect(()=>{
+		if(authUser){
+			setFormData({
+				fullName: authUser.fullName,
+				userName: authUser.userName,
+				email: authUser.email,
+				bio: authUser.bio,
+				link: authUser.link,
+				newPassword: "",
+				currentPassword: "",
+			})
+		}
+	},[authUser])
 
 	return (
 		<>
@@ -28,9 +49,9 @@ const EditProfileModal = () => {
 					<h3 className='font-bold text-lg my-3'>Update Profile</h3>
 					<form
 						className='flex flex-col gap-4'
-						onSubmit={(e) => {
+						onSubmit={async (e) => {
 							e.preventDefault();
-							alert("Profile updated successfully");
+							await updateProfile(formData)
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
@@ -46,8 +67,8 @@ const EditProfileModal = () => {
 								type='text'
 								placeholder='Username'
 								className='flex-1 input border border-gray-700 rounded p-2 input-md'
-								value={formData.username}
-								name='username'
+								value={formData.userName}
+								name='userName'
 								onChange={handleInputChange}
 							/>
 						</div>
@@ -94,7 +115,7 @@ const EditProfileModal = () => {
 							name='link'
 							onChange={handleInputChange}
 						/>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
+						<button className='btn btn-primary rounded-full btn-sm text-white'>{isUpdatingProfile ? <LoadingSpinner size="sm"/> : "Update"}</button>
 					</form>
 				</div>
 				<form method='dialog' className='modal-backdrop'>

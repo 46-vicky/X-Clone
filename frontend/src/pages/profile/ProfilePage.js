@@ -14,6 +14,9 @@ import { MdEdit } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
 import { baseURL } from "../../constant/url";
 import { formatMemberSinceDate } from "../../utils/data";
+import useFollow from "../../hooks/useFollow";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -22,9 +25,12 @@ const ProfilePage = () => {
 
 	const coverImgRef = useRef(null);
 	const profileImgRef = useRef(null);
-	const isMyProfile = true;
 
 	const { username } = useParams();
+
+	const {data : authUser} = useQuery({queryKey : ["authUser"]})
+
+	const {updateProfile, isUpdatingProfile} = useUpdateUserProfile()
 
 	const {data:user, isLoading, refetch, isRefetching} = useQuery({
 
@@ -44,7 +50,6 @@ const ProfilePage = () => {
 				if(!res.ok){
 					throw new Error(data.error || "Something went Wroong")
 				}
-					console.log(data)
 				return data;
 
 			}catch(error){
@@ -70,6 +75,13 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
+
+	
+	const isMyProfile = authUser?._id === user?._id ? true : false;
+
+	const {follow, isPending} = useFollow();
+
+	const amIFollowing = authUser?.following.includes(user?._id)
 
 	return (
 		<>
@@ -137,17 +149,23 @@ const ProfilePage = () => {
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
+										onClick={() => follow(user?._id)}
 									>
-										Follow
+										{isPending &&  <LoadingSpinner sixe="sm" />}
+										{!isPending &&  amIFollowing && "Unfollow"}
+										{!isPending &&  !amIFollowing && "Follow"}
 									</button>
 								)}
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={async() =>{ 
+											await updateProfile({coverImg, profileImg})
+											setCoverImg(null)
+											setProfileImg(null)
+										}}
 									>
-										Update
+										{isUpdatingProfile ? <LoadingSpinner size="sm"/> : "Update" }
 									</button>
 								)}
 							</div>
@@ -214,7 +232,7 @@ const ProfilePage = () => {
 						</>
 					)}
 
-					<Posts />
+					<Posts feedType={feedType} username={username} userId ={user?._id} />
 				</div>
 			</div>
 		</>

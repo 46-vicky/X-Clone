@@ -5,14 +5,17 @@ import { baseURL } from "../../constant/url";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-const Posts = ({feedType}) => {
-
+const Posts = ({feedType, username, userId}) => {
 	const getPostEndPoint = ()=>{
 		switch(feedType){
 			case "forYou" :
 				return `${baseURL}/api/posts/all`;
 			case "following" :
 				return `${baseURL}/api/posts/following`;
+			case "posts" :
+				return `${baseURL}/api/posts/user/${username}`;
+			case "likes" :
+				return `${baseURL}/api/posts/likes/${userId}`;
 			default : 
 				return `${baseURL}/api/posts/all`;
 		}
@@ -46,7 +49,7 @@ const Posts = ({feedType}) => {
 
 	useEffect(()=>{
 		refetch()
-	},[feedType, refetch])
+	},[feedType, refetch, username])
 
 	return (
 		<>
