@@ -50,7 +50,7 @@ const App = () => {
   }
   return (
     <div className='flex max-w-6xl mx-auto'>
-      {authUser ? <Sidebar/> : <Navigate to="/login/"/>}
+      {authUser && <Sidebar/>}
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login/"/>} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/"/>} />
