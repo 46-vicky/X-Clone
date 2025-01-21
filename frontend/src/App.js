@@ -18,7 +18,7 @@ const App = () => {
     queryFn : async ()=>{
       try{
         const res = await fetch(`${baseURL}/api/auth/me`,{
-          metho : "GET",
+          method : "GET",
           credentials : "include",
           headers : {
             "Content-Type" : "apllication/json"
