@@ -50,7 +50,7 @@ const App = () => {
   }
   return (
     <div className='flex max-w-6xl mx-auto'>
-      {authUser && <Sidebar/>}
+      {authUser && <Sidebar />}
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login/"/>} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/"/>} />
@@ -58,7 +58,7 @@ const App = () => {
         <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login/"/>}/>
         <Route path='/profile/:username' element={authUser ? <ProfilePage /> : <Navigate to="/login/"/>}/>
       </Routes>
-      {authUser ? <RightPanel/> : <Navigate to="/login/"/>}
+      {authUser && <RightPanel />}
       <Toaster 
         position="top-right"
         reverseOrder={false}
