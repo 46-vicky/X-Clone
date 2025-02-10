@@ -88,7 +88,7 @@ const Sidebar = () => {
 								<img src={authUser?.profileImg || "/avatar-placeholder.png"} alt="avatar"/>
 							</div>
 						</div>
-						<div className='flex justify-between flex-1'>
+						<div className='flex justify-between items-center flex-1'>
 							<div className='hidden md:block'>
 								<p className='text-white font-bold text-sm w-20 truncate'>{authUser?.fullName}</p>
 								<p className='text-slate-500 text-sm'>@{authUser?.userName}</p>
